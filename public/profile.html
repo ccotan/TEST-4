@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Профиль - QUADRANT</title>
+<meta name="description" content="Профиль игрока QUADRANT.">
+<meta name="theme-color" content="#060A12">
+<link rel="icon" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="profile">
+<main class="wrap page" id="root"></main>
+<script src="assets/app.js"></script>
+<script>
+const COVERS=["linear-gradient(120deg,#0B1E3B,#1A3F6E 45%,#3E6E9E)","linear-gradient(120deg,#062A3A,#0E5C8A 50%,#1FA6A0)","linear-gradient(120deg,#3A1A06,#9A4A12 50%,#D9A13A)","linear-gradient(120deg,#1A0B2E,#4B2A8A 50%,#2A6AD9)","linear-gradient(120deg,#2E0B12,#8A1F3A 50%,#D95A3A)","linear-gradient(120deg,#111,#2A2A2A 50%,#3D4A44)"];
+const coverCss=u=>u.coverImg?`url('${u.coverImg}')`:COVERS[u.cover||0];
+const I=(p)=>`<svg viewBox="0 0 24 24">${p}</svg>`;
+const fmtD=d=>d?new Date(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}):"-";
+const ORD={awaiting_payment:"Ожидает оплаты",paid:"Оплачен",done:"Выдан",cancelled:"Отменён"};
+let view=location.hash==="#settings"?"settings":"profile";
+addEventListener("hashchange",()=>{ view=location.hash==="#settings"?"settings":"profile"; render(); if(location.hash==="#orders") document.getElementById("orders")?.scrollIntoView({behavior:"smooth"}); });
+
+function render(){
+  const u=Q.me, root=document.getElementById("root");
+  if(!u){ root.innerHTML=`<div class="gate"><svg><use href="#qlogo"/></svg><h1>Войдите в аккаунт</h1><p>Профиль, статус заявки и настройки доступны после входа.</p><div class="cta" style="justify-content:center"><button class="btn btn-glow" onclick="Q.openAuth('register')">Регистрация</button><button class="btn" onclick="Q.openAuth('login')">Войти</button></div></div>`; return; }
+  const s=Q.statusOf(u);
+  root.innerHTML=`
+  <div class="pcover"><div class="ban ${u.coverImg?"photo":""}" style="--cover:${coverCss(u)}"></div>
+    <a class="btn btn-sm edit" href="#settings">${I('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>').replace('<svg','<svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8"')}Редактировать</a>
+    <div class="pinfo"><img src="${head(u.nick,104)}" alt=""><div><h1>${esc(u.nick)}${Q.adminStar(u)} ${Q.roleBadge(u)} <span class="bal" title="Баланс">${Q.balHTML(u)}</span>${s!=="need_discord"?` <span class="st ${s}">${Q.STATUS[s]}</span>`:""}</h1><div class="bio ${u.bio?"":"none"}">${u.bio?esc(u.bio):"Описание отсутствует."}</div></div>
+      <div class="right"><span class="pill2">На сервере с <b>${fmtD(u.created)}</b></span></div></div></div>
+  <div class="ptabs"><button class="${view==="profile"?"on":""}" onclick="location.hash=''">Профиль</button><button class="${view==="settings"?"on":""}" onclick="location.hash='settings'">Настройки</button></div>
+  <div id="pv"></div>`;
+  view==="settings"?settings(u):profile(u);
+}
+
+async function profile(u){
+  document.getElementById("pv").innerHTML=`<div class="pgrid">
+    <div><div class="box skin" id="skin3d" aria-label="3D-скин ${esc(u.nick)}"></div>
+      <div class="box"><div class="sub-row"><div class="bhead" style="margin:0"><span class="bi">${I('<path d="m12 2 3 7h7l-5.5 4.5 2 7.5-6.5-4.5L5.5 21l2-7.5L2 9h7z"/>')}</span><div><small>Подписка</small><b>${u.plus?"QUADRANT+":"Нет"}</b>${u.plus&&u.plusUntil?`<div class="muted" style="font-size:13px">до ${new Date(u.plusUntil).toLocaleDateString("ru-RU")}</div>`:""}</div></div><a class="link-more" href="shop.html">${u.plus?"Продлить":"Купить"}</a></div></div></div>
+    <div><div class="box"><div class="bhead"><span class="bi">${I('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')}</span><div><small>Активность</small><b>Игровое время</b></div><span class="r" id="lastSeen"></span></div><div class="kpis" id="kpis"></div><div id="nodata"></div></div>
+      <div class="box" id="orders"><div class="bhead"><span class="bi">${I('<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>')}</span><div><small>Магазин</small><b>Мои покупки</b></div></div><ul class="orders" id="olist"><li class="muted" style="color:var(--muted)">Загрузка…</li></ul></div></div></div>`;
+  Q.skin3d(document.getElementById("skin3d"), u.nick);
+  let st=null; try{ st=(await Q.api.call("/stats")).stats; }catch{}
+  const K=[["Всего наиграно",st?.playTime,1],["Смертей",st?.deaths],["Убито мобов",st?.mobKills],["Пройдено",st?.distance]];
+  document.getElementById("kpis").innerHTML=K.map(([l,v,m])=>`<div class="kp ${m?"main":""}"><small>${l}</small><b>${v??"-"}</b></div>`).join("");
+  document.getElementById("lastSeen").innerHTML=st?.lastSeen?`Был в игре: <b style="color:var(--mint)">${fmtD(st.lastSeen)}</b>`:"";
+  document.getElementById("nodata").innerHTML=st?"":`<div class="nodata">Статистика появится после первого входа на сервер</div>`;
+  let os=[]; try{ os=(await Q.api.call("/orders")).orders; }catch{}
+  document.getElementById("olist").innerHTML=os.length?os.map(o=>`<li><span><b>${esc(o.title)}</b> <span style="color:var(--muted)">· ${esc(o.id)} · ${fmtD(o.created)}</span></span><span>${o.price} ₽ · <span style="color:${o.status==="done"?"var(--mint)":o.status==="cancelled"?"var(--red)":"var(--amber)"}">${ORD[o.status]||o.status}</span></span></li>`).join(""):`<li style="color:var(--muted)">Покупок пока нет. <a href="shop.html" style="color:var(--mint)">В магазин →</a></li>`;
+  if(location.hash==="#orders") document.getElementById("orders").scrollIntoView();
+}
+
+function shrink(file){ return new Promise((ok,fail)=>{ const im=new Image(), url=URL.createObjectURL(file);
+  im.onload=()=>{ URL.revokeObjectURL(url); const W=1600,H=400, k=Math.max(W/im.width,H/im.height), w=im.width*k, h=im.height*k;
+    const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d"); x.imageSmoothingQuality="high"; x.drawImage(im,(W-w)/2,(H-h)/2,w,h);
+    let q=.82, d=c.toDataURL("image/jpeg",q); while(d.length>450000&&q>.4){ q-=.1; d=c.toDataURL("image/jpeg",q); } ok(d); };
+  im.onerror=()=>{ URL.revokeObjectURL(url); fail(); }; im.src=url; }); }
+
+function settings(u){
+  const dc=u.discord;
+  document.getElementById("pv").innerHTML=`<div class="sgrid">
+   <div class="snav"><a href="#s-profile" class="on">Профиль</a><a href="#s-security">Безопасность</a><a href="#s-discord">Discord</a><a href="#s-sessions">Сеансы</a><a href="#s-danger" class="dz">Удаление</a></div>
+   <div>
+    <div class="box sbox" id="s-profile"><h3>Профиль</h3><p>Как вас видят другие игроки на сайте.</p>
+      <div class="fl" style="margin-bottom:16px"><label for="bio">Описание</label><textarea class="inp" id="bio" maxlength="160" placeholder="Пара слов о себе: чем занимаетесь на сервере, где ваша база…">${esc(u.bio||"")}</textarea><div class="hint" id="bioCnt"></div></div>
+      <span class="fl"><label>Обложка профиля</label></span><div class="covers" id="covers">${COVERS.map((c,i)=>`<button style="background:${c}" class="${!u.coverImg&&(u.cover||0)===i?"on":""}" data-i="${i}" aria-label="Обложка ${i+1}"></button>`).join("")}</div>
+      <div class="cover-up"><label class="btn btn-sm" for="coverFile">Загрузить своё фото</label><input type="file" id="coverFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden><button class="btn btn-sm" id="coverDel" ${u.coverImg?"":"hidden"}>Убрать фото</button><small>JPG, PNG или WebP. Лучше широкое, например 1600×320.</small></div>
+      <div class="sactions"><button class="btn btn-glow" id="saveProfile">Сохранить</button><span class="smsg" id="m1"></span></div>
+      <p style="color:var(--muted);font-size:14px;margin-top:16px">Аватар и скин берутся из вашего аккаунта Minecraft - смените скин в лаунчере, и он обновится здесь.</p></div>
+    <div class="box sbox" id="s-security"><h3>Безопасность</h3><p>Смена пароля и почты. Ник изменить нельзя - для этого есть услуга «Смена аккаунта».</p>
+      <div class="frow"><div class="fl"><label for="pc">Текущий пароль</label><input class="inp" id="pc" type="password" autocomplete="current-password"></div><div class="fl"><label for="pn">Новый пароль</label><input class="inp" id="pn" type="password" autocomplete="new-password" placeholder="Минимум 8 символов"></div></div>
+      <div class="sactions" style="margin-bottom:24px"><button class="btn" id="savePass">Сменить пароль</button><span class="smsg" id="m2"></span></div>
+      <div class="frow"><div class="fl"><label for="em">Email</label><input class="inp" id="em" type="email" value="${esc(u.email)}"></div><div class="fl"><label for="ep">Пароль для подтверждения</label><input class="inp" id="ep" type="password" autocomplete="current-password"></div></div>
+      <div class="sactions"><button class="btn" id="saveEmail">Сменить email</button><span class="smsg" id="m3"></span></div></div>
+    <div class="box sbox" id="s-discord"><h3>Discord</h3><p>Привязка нужна для вайтлиста и уведомлений.</p>
+      <div class="sub-row"><div class="bhead" style="margin:0"><span class="bi" style="padding:0;overflow:hidden;border:0"><img src="assets/discord.png" alt="Discord" style="width:100%;height:100%;image-rendering:pixelated"></span><div><small>Аккаунт</small><b>${dc?(dc.username?"@"+esc(dc.username):"Подтверждён вручную"):"Не привязан"}</b></div></div>
+      <div class="sactions">${dc?`<button class="btn" data-act="discord">Проверить снова</button><button class="btn red" id="unlink">Отвязать</button>`:`<button class="btn btn-discord" data-act="discord"><svg viewBox="0 0 24 24" fill="#fff"><use href="#dc"/></svg>Привязать</button>`}</div></div>
+      ${dc&&!dc.inGuild?`<p style="color:var(--amber);font-size:14px;margin-top:12px">Вы не на нашем Discord-сервере - <a data-cfg-href="discordInvite" href="${CONFIG.discordInvite}" target="_blank" style="color:var(--mint)">вступите</a> и нажмите «Проверить снова».</p>`:""}</div>
+    <div class="box sbox" id="s-sessions"><h3>Сеансы</h3><p>Если вы входили с чужого устройства - завершите все сеансы.</p><div class="sactions"><button class="btn" id="logoutAll">Выйти на всех устройствах</button></div></div>
+    <div class="box sbox danger" id="s-danger"><h3 style="color:var(--red)">Удаление аккаунта</h3><p>Аккаунт удалится вместе с заявкой в вайтлист. Прогресс в мире останется. Действие нельзя отменить.</p>
+      <div class="frow"><div class="fl"><label for="dp">Пароль</label><input class="inp" id="dp" type="password" autocomplete="current-password"></div></div>
+      <div class="sactions"><button class="btn red" id="del">Удалить аккаунт</button><span class="smsg" id="m4"></span></div></div>
+   </div></div>`;
+  const msg=(id,t,err)=>{ const m=document.getElementById(id); m.textContent=t; m.className="smsg"+(err?" err":""); };
+  let cover=u.cover||0; const cnt=()=>document.getElementById("bioCnt").textContent=`${document.getElementById("bio").value.length}/160`; cnt();
+  document.getElementById("bio").oninput=cnt;
+  let coverImg; // undefined = не меняли, "" = убрать, data:... = новое фото
+  const ban=()=>document.querySelector(".pcover .ban");
+  const showCover=(css,photo)=>{ ban().style.setProperty("--cover",css); ban().classList.toggle("photo",photo); document.getElementById("coverDel").hidden=!photo; };
+  document.querySelectorAll("#covers button").forEach(b=>b.onclick=()=>{ cover=+b.dataset.i; coverImg=""; document.querySelectorAll("#covers button").forEach(x=>x.classList.toggle("on",x===b)); showCover(COVERS[cover],false); });
+  document.getElementById("coverDel").onclick=()=>{ coverImg=""; showCover(COVERS[cover],false); document.querySelector(`#covers button[data-i="${cover}"]`)?.classList.add("on"); };
+  document.getElementById("coverFile").onchange=async e=>{ const file=e.target.files[0]; e.target.value=""; if(!file) return;
+    if(!file.type.startsWith("image/")) return msg("m1","Это не картинка",1);
+    try{ coverImg=await shrink(file); showCover(`url('${coverImg}')`,true); document.querySelectorAll("#covers button").forEach(x=>x.classList.remove("on")); msg("m1","Фото готово - нажмите «Сохранить»"); }catch{ msg("m1","Не удалось открыть фото",1); } };
+  document.getElementById("saveProfile").onclick=async()=>{ try{ const r=await Q.api.call("/profile",{bio:document.getElementById("bio").value,cover,coverImg}); Q.me=r.user; coverImg=undefined; msg("m1","Сохранено ✓"); document.querySelector(".pinfo .bio").textContent=r.user.bio||"Описание отсутствует."; document.querySelector(".pinfo .bio").classList.toggle("none",!r.user.bio); }catch(e){ msg("m1",e.message,1); } };
+  document.getElementById("savePass").onclick=async()=>{ try{ await Q.api.call("/password",{current:document.getElementById("pc").value,next:document.getElementById("pn").value}); msg("m2","Пароль изменён ✓"); document.getElementById("pc").value=document.getElementById("pn").value=""; }catch(e){ msg("m2",e.message,1); } };
+  document.getElementById("saveEmail").onclick=async()=>{ const em=document.getElementById("em").value.trim(); if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return msg("m3","Некорректный email",1);
+    try{ const r=await Q.api.call("/email",{email:em,password:document.getElementById("ep").value}); Q.me=r.user; msg("m3","Email изменён ✓"); document.getElementById("ep").value=""; }catch(e){ msg("m3",e.message,1); } };
+  document.getElementById("unlink")?.addEventListener("click",async()=>{ if(!confirm("Отвязать Discord? Вы потеряете место в вайтлисте до новой привязки.")) return; const r=await Q.api.call("/discord/unlink",{}); Q.setUser(r.user); Q.toast("Discord отвязан"); });
+  document.getElementById("logoutAll").onclick=async()=>{ await Q.api.call("/logout-all",{}); Q.setUser(null); Q.toast("Все сеансы завершены"); };
+  document.getElementById("del").onclick=async()=>{ if(!confirm("Точно удалить аккаунт навсегда?")) return; try{ await Q.api.call("/delete-account",{password:document.getElementById("dp").value}); Q.setUser(null); Q.toast("Аккаунт удалён"); setTimeout(()=>location.href="index.html",800); }catch(e){ msg("m4",e.message,1); } };
+  const links=[...document.querySelectorAll(".snav a")];
+  links.forEach(a=>a.onclick=e=>{ e.preventDefault(); document.querySelector(a.getAttribute("href")).scrollIntoView({behavior:"smooth"}); links.forEach(x=>x.classList.toggle("on",x===a)); });
+}
+Q.onUser(()=>render());
+</script>
+</body></html>

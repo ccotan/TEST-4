@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Игрок - QUADRANT</title>
+<meta name="theme-color" content="#060A12">
+<link rel="icon" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="players">
+<main class="wrap page" id="root"><div class="empty">Загрузка...</div></main>
+<script src="assets/app.js"></script>
+<script>
+const COVERS=["linear-gradient(120deg,#0B1E3B,#1A3F6E 45%,#3E6E9E)","linear-gradient(120deg,#062A3A,#0E5C8A 50%,#1FA6A0)","linear-gradient(120deg,#3A1A06,#9A4A12 50%,#D9A13A)","linear-gradient(120deg,#1A0B2E,#4B2A8A 50%,#2A6AD9)","linear-gradient(120deg,#2E0B12,#8A1F3A 50%,#D95A3A)","linear-gradient(120deg,#10161A,#2A3A44 50%,#5A6A74)"];
+const fmtD=d=>d?new Date(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}):"-";
+const nick=new URLSearchParams(location.search).get("nick")||"";
+const root=document.getElementById("root");
+let shown=false;
+async function show(){
+  if(!nick){ location.replace("players.html"); return; }
+  let p; try{ p=(await Q.api.call("/player?nick="+encodeURIComponent(nick))).player; }
+  catch(e){ root.innerHTML=`<div class="gate"><svg><use href="#qlogo"/></svg><h1>Игрок не найден</h1><p>${esc(e.message)}</p><div class="cta" style="justify-content:center"><a class="btn btn-glow" href="players.html">Все игроки</a></div></div>`; return; }
+  document.title=p.nick+" - QUADRANT";
+  const me=Q.me&&Q.me.nick.toLowerCase()===p.nick.toLowerCase();
+  const cov=p.coverImg?`url('${p.coverImg}')`:(COVERS[p.cover||0]||COVERS[0]);
+  root.innerHTML=`
+  <div class="pcover"><div class="ban ${p.coverImg?"photo":""}" style="--cover:${cov}"></div>
+    <div class="pinfo"><img src="${head(p.nick,104)}" alt=""><div><h1>${esc(p.nick)}${Q.adminStar(p)} ${Q.roleBadge(p)}${p.banned?' <span class="st banned">Заблокирован</span>':""}</h1><div class="bio ${p.bio?"":"none"}">${p.bio?esc(p.bio):"Описание отсутствует."}</div></div>
+      <div class="right"><span class="pill2">На сервере с <b>${fmtD(p.created)}</b></span></div></div></div>
+  <div class="ptools" style="margin-top:16px">${me?`<a class="btn btn-glow" href="profile.html">Это вы - открыть свой профиль</a>`:`<a class="btn btn-glow" id="write" href="messages.html?with=${encodeURIComponent(p.nick)}">Написать сообщение</a>`}<a class="btn" href="players.html">Все игроки</a></div>
+  <div class="pubgrid"><div class="box skin" id="skin3d" aria-label="3D-скин ${esc(p.nick)}"></div>
+    <div class="box"><h3 style="margin-bottom:12px">Об игроке</h3>
+      <p style="color:var(--muted)">Роль: <b style="color:var(--text)">${Q.ROLE[p.role]?Q.ROLE[p.role][1]:"Игрок"}</b></p>
+      <p style="color:var(--muted);margin-top:6px">Вайтлист: <b style="color:var(--text)">${p.whitelisted?"Есть доступ":"Нет"}</b></p>
+      ${p.plus?'<p style="color:var(--muted);margin-top:6px">Подписка: <b style="color:var(--mint)">QUADRANT+</b></p>':""}
+    </div></div>`;
+  Q.skin3d(document.getElementById("skin3d"), p.nick);
+  const w=document.getElementById("write"); if(w) w.onclick=e=>{ if(!Q.me){ e.preventDefault(); Q.toast("Войдите, чтобы написать сообщение"); Q.openAuth("login"); } };
+}
+Q.onUser(()=>show());
+</script>
+</body>
+</html>

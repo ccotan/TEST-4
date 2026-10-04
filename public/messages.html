@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сообщения - QUADRANT</title>
+<meta name="theme-color" content="#060A12">
+<link rel="icon" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="messages">
+<main class="wrap page" id="root"></main>
+<script src="assets/app.js"></script>
+<script>
+const root=document.getElementById("root");
+let cur=new URLSearchParams(location.search).get("with")||"", convs=[], lastSig="", timer=null, built=false;
+const tm=d=>{ const x=new Date(d), n=new Date(); return x.toDateString()===n.toDateString()?x.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):x.toLocaleDateString("ru-RU",{day:"numeric",month:"short"})+" "+x.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}); };
+function build(){
+  if(!Q.me){ built=false; clearInterval(timer); root.innerHTML=`<div class="gate"><svg><use href="#qlogo"/></svg><h1>Войдите в аккаунт</h1><p>Сообщения доступны после входа.</p><div class="cta" style="justify-content:center"><button class="btn btn-glow" data-open="login">Войти</button></div></div>`; return; }
+  if(built) return; built=true;
+  root.innerHTML=`<div class="page-head" style="margin-bottom:16px"><div><div class="eyebrow">Личные сообщения</div><h1>Сообщения</h1></div></div>
+  <div class="chat ${cur?"open":""}" id="chat"><div class="convs"><div class="ch">Диалоги<a class="btn btn-sm" href="players.html">+ Новый</a></div><div id="clist"></div></div>
+  <div class="thread" id="thread"><div class="tempty">Выберите диалог слева<br>или найдите игрока в разделе «Игроки»</div></div></div>`;
+  loadConvs(); if(cur) openThread(cur);
+  timer=setInterval(()=>{ if(document.hidden) return; loadConvs(); if(cur) refresh(); },5000);
+}
+async function loadConvs(){
+  try{ convs=(await Q.api.call("/messages")).convs; }catch{ return; }
+  const el=document.getElementById("clist"); if(!el) return;
+  el.innerHTML=convs.length?convs.map(c=>`<button class="conv ${cur.toLowerCase()===c.nick.toLowerCase()?"on":""}" data-n="${esc(c.nick)}"><img src="${head(c.nick,40)}" alt=""><span class="t"><b>${esc(c.nick)}</b><small>${c.mine?"Вы: ":""}${esc(c.last)}</small></span>${c.unread&&cur.toLowerCase()!==c.nick.toLowerCase()?`<span class="cnt">${c.unread}</span>`:""}</button>`).join(""):`<div class="tempty" style="padding:32px 16px">Диалогов пока нет</div>`;
+  Q.setUnread(convs.filter(c=>cur.toLowerCase()!==c.nick.toLowerCase()).reduce((a,c)=>a+(c.unread||0),0));
+}
+document.addEventListener("click",e=>{ const b=e.target.closest(".conv"); if(b) openThread(b.dataset.n); if(e.target.closest("[data-back]")){ cur=""; history.replaceState(null,"","messages.html"); document.getElementById("chat").classList.remove("open"); loadConvs(); } });
+async function openThread(n){
+  cur=n; lastSig=""; history.replaceState(null,"","messages.html?with="+encodeURIComponent(n));
+  document.getElementById("chat").classList.add("open");
+  const th=document.getElementById("thread");
+  th.innerHTML=`<div class="thead"><button class="btn btn-sm back" data-back aria-label="Назад">←</button><img src="${head(n,36)}" alt=""><a class="n" href="player.html?nick=${encodeURIComponent(n)}">${esc(n)}</a></div><div class="msgs" id="msgs"><div class="tempty">Загрузка...</div></div>
+    <form class="compose" id="compose"><textarea id="txt" maxlength="1000" placeholder="Сообщение..." aria-label="Сообщение"></textarea><button class="btn btn-glow" type="submit">Отправить</button></form>`;
+  const ta=document.getElementById("txt");
+  ta.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); document.getElementById("compose").requestSubmit(); } });
+  ta.addEventListener("input",()=>{ ta.style.height="46px"; ta.style.height=Math.min(140,ta.scrollHeight)+"px"; });
+  document.getElementById("compose").onsubmit=async e=>{ e.preventDefault(); const text=ta.value.trim(); if(!text) return;
+    const btn=e.target.querySelector("button"); btn.disabled=true;
+    try{ await Q.api.call("/messages/send",{to:cur,text}); ta.value=""; ta.style.height="46px"; await refresh(); loadConvs(); }catch(err){ Q.toast(err.message); } finally{ btn.disabled=false; ta.focus(); } };
+  await refresh(); loadConvs(); if(matchMedia("(min-width:761px)").matches) ta.focus();
+}
+async function refresh(){
+  const box=document.getElementById("msgs"); if(!box) return;
+  let r; try{ r=await Q.api.call("/messages/thread?with="+encodeURIComponent(cur)); }catch(e){ box.innerHTML=`<div class="tempty">${esc(e.message)}</div>`; return; }
+  const sig=r.messages.length+"|"+(r.messages.at(-1)||{}).at; if(sig===lastSig) return; lastSig=sig;
+  const n=r.with.nick; cur=n; const a=document.querySelector(".thead .n"); if(a) a.textContent=n;
+  const me=Q.me.nick.toLowerCase();
+  box.innerHTML=r.messages.length?r.messages.map(m=>`<div class="msg-b ${m.from.toLowerCase()===me?"me":""}">${esc(m.text)}<time>${tm(m.at)}</time></div>`).join(""):`<div class="tempty">Напишите первое сообщение игроку ${esc(n)}</div>`;
+  box.scrollTop=box.scrollHeight;
+}
+Q.onUser(()=>build());
+</script>
+</body>
+</html>

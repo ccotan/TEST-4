@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QUADRANT - админ-панель</title><meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-14 -14 128 128'%3E%3Crect x='-14' y='-14' width='128' height='128' rx='28' fill='%23060B08'/%3E%3Cg fill='%23fff'%3E%3Cpath id='q' d='M15 0H41A6 6 0 0 1 47 6V41A6 6 0 0 1 41 47H6A6 6 0 0 1 0 41V15A15 15 0 0 1 15 0Z'/%3E%3Cuse href='%23q' transform='translate(100 0) scale(-1 1)'/%3E%3Cuse href='%23q' transform='translate(0 100) scale(1 -1)'/%3E%3Cuse href='%23q' transform='translate(100 100) scale(-1 -1)'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+:root{--bg:#060A12;--surface:#0C1420;--raised:#122036;--hover:#18291F;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);--text:#EEF5FF;--muted:rgba(238,245,255,.62);--mint:#8FD3FF;--green:#3B82D6;--sky:#0FA8E0;--red:#E97366;--amber:#E9B35A;--blurple:#5865F2;--mono:Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0}[hidden]{display:none!important}
+body{background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(600px 400px at 0% 0%,rgba(59,130,214,.18),transparent 70%),radial-gradient(500px 400px at 100% 100%,rgba(15,168,224,.08),transparent 70%)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:8px}
+svg.q{fill:#fff;filter:drop-shadow(0 0 8px rgba(143,211,255,.55))}
+.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* вход */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px}
+.lcard{width:100%;max-width:380px;padding:32px;border-radius:14px;background:var(--surface);border:1px solid var(--line2);box-shadow:0 0 80px rgba(59,130,214,.15);text-align:center}
+.lcard svg.q{width:44px;height:44px;margin-bottom:16px}.lcard h1{font-size:22px;margin-bottom:4px}.lcard p{color:var(--muted);margin-bottom:24px;font-size:14px}
+.lcard input{margin-bottom:12px}.lcard .btn{width:100%}.err{color:var(--red);font-size:14px;margin-top:12px;min-height:21px}
+/* каркас */
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+aside{border-right:1px solid var(--line);padding:20px 12px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px;background:rgba(6,10,18,.6);backdrop-filter:blur(12px)}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 12px 20px;font-weight:800;letter-spacing:.14em;font-size:14px}.brand svg{width:24px;height:24px}.brand small{display:block;font-weight:500;letter-spacing:0;color:var(--muted);font-size:12px}
+.nav{text-decoration:none;display:flex;align-items:center;gap:12px;min-height:42px;padding:0 12px;border-radius:10px;border:0;background:none;cursor:pointer;color:var(--muted);text-align:left;width:100%;transition:.15s;position:relative}
+.nav:hover{background:var(--raised);color:var(--text)}
+.nav.on{background:var(--raised);color:var(--text);box-shadow:inset 0 0 0 1px rgba(143,211,255,.22)}
+.nav.on::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--mint);box-shadow:0 0 10px var(--mint)}
+.nav .cnt{margin-left:auto;font-size:12px;font-weight:700;background:rgba(15,168,224,.15);color:var(--sky);padding:0 8px;border-radius:999px}
+aside .grow{flex:1}
+main{padding:32px 40px 64px;min-width:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+h1.t{font-size:26px;letter-spacing:-.02em}.sub{color:var(--muted);font-size:14px}
+/* элементы */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--line2);background:var(--surface);cursor:pointer;font-weight:600;font-size:14px;transition:.2s;white-space:nowrap}
+.btn:hover{border-color:rgba(143,211,255,.45);box-shadow:0 0 18px rgba(143,211,255,.12)}
+.btn:disabled{opacity:.45;pointer-events:none}
+.btn.pri{background:var(--green);border-color:var(--green);color:#fff}.btn.pri:hover{box-shadow:0 0 22px rgba(59,130,214,.5)}
+.btn.dng{color:var(--red)}.btn.dng:hover{border-color:rgba(233,115,102,.5);box-shadow:0 0 18px rgba(233,115,102,.15)}
+.btn.sm{min-height:34px;padding:0 12px;font-size:13px}
+input.in,select.in,textarea.in{width:100%;height:42px;padding:0 14px;border-radius:10px;border:1px solid var(--line2);background:var(--bg);outline:none;transition:.2s}
+textarea.in{height:auto;min-height:96px;padding:12px 14px;resize:vertical}
+.in:focus{border-color:var(--mint);box-shadow:0 0 0 4px rgba(143,211,255,.12)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.ph{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);font-weight:600}
+.pb{padding:20px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--muted);white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.approved{color:var(--mint);background:rgba(143,211,255,.1)}.st.pending{color:var(--sky);background:rgba(15,168,224,.12)}
+.st.awaiting_payment{color:var(--sky);background:rgba(15,168,224,.12)}.st.paid{color:var(--lime,#C9B8FF);background:rgba(201,184,255,.1)}.st.done{color:var(--mint);background:rgba(143,211,255,.1)}.st.cancelled{color:var(--red);background:rgba(233,115,102,.1)}
+:root{color-scheme:dark}
+.pin{background:#0b100d;border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:6px 8px;font:inherit;font-size:13px;width:100%}
+.pin.n{width:90px}.sw{width:14px;height:14px;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:8px}
+.st.need_discord{color:#8C96FF;background:rgba(88,101,242,.14)}.st.rejected,.st.banned{color:var(--red);background:rgba(233,115,102,.1)}
+.av{width:36px;height:36px;border-radius:8px;image-rendering:pixelated;background:var(--raised);flex:none}
+/* обзор */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{padding:18px;border-radius:14px;background:var(--surface);border:1px solid var(--line);cursor:pointer;transition:.2s;text-align:left}
+.kpi:hover{border-color:rgba(143,211,255,.35);transform:translateY(-2px)}
+.kpi b{display:block;font-size:28px;letter-spacing:-.02em;line-height:1.2}.kpi span{color:var(--muted);font-size:13px}
+.kpi.hl{border-color:rgba(15,168,224,.35);box-shadow:0 0 30px rgba(15,168,224,.08)}
+.two{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:16px}
+.chart{display:flex;align-items:flex-end;gap:8px;height:180px;padding-top:12px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bar i{display:block;width:100%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--mint),rgba(59,130,214,.5));box-shadow:0 0 12px rgba(143,211,255,.25);min-height:3px;transition:height .6s cubic-bezier(.2,.8,.2,1)}
+.bar i.z{background:var(--line2);box-shadow:none}
+.bar span{font-size:11px;color:var(--muted)}.bar em{font-style:normal;font-size:12px;font-weight:600}
+.srv{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--red)}.dot.on{background:var(--mint);box-shadow:0 0 0 4px rgba(143,211,255,.15),0 0 14px var(--mint)}
+.ints{display:grid;gap:8px}
+.int{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;background:var(--bg);font-size:14px}
+.int b{font-size:13px}.int b.y{color:var(--mint)}.int b.n{color:var(--muted)}
+.feed{list-style:none}.feed li{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:14px;align-items:center}.feed li:first-child{border:0}
+.feed time{color:var(--muted);font-size:12px;margin-left:auto;white-space:nowrap}
+/* игроки */
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.toolbar .s{flex:1;min-width:220px;position:relative}.toolbar .s .ic{position:absolute;left:12px;top:12px;color:var(--muted)}.toolbar .s input{padding-left:38px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chips button{min-height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line2);background:none;cursor:pointer;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.chips button b{font-size:12px;color:var(--text)}
+.chips button.on{border-color:rgba(143,211,255,.5);color:var(--text);background:rgba(143,211,255,.08)}
+.bulk{display:flex;gap:8px;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(143,211,255,.07);border:1px solid rgba(143,211,255,.3);margin-bottom:12px}
+.bulk span{margin-right:auto;font-weight:600;font-size:14px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:12px 16px;border-bottom:1px solid var(--line)}
+td{padding:10px 16px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
+tbody tr{cursor:pointer;transition:background .15s}tbody tr:hover{background:var(--hover)}tbody tr.sel{background:rgba(143,211,255,.06)}
+tbody tr:last-child td{border-bottom:0}
+.who{display:flex;gap:12px;align-items:center;min-width:0}.who b{display:block}.who small{color:var(--muted);display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px}
+.cb{width:18px;height:18px;accent-color:var(--green);cursor:pointer}
+.muted{color:var(--muted)}.empty{padding:48px;text-align:center;color:var(--muted)}
+.tw{overflow-x:auto}
+/* шторка */
+.shade{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:40;opacity:0;pointer-events:none;transition:.25s}
+.shade.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:100%;z-index:41;background:var(--surface);border-left:1px solid var(--line2);box-shadow:-30px 0 80px rgba(0,0,0,.5);transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);overflow-y:auto;padding:24px}
+.drawer.open{transform:none}
+.dh{display:flex;gap:16px;align-items:center;margin-bottom:20px}
+.dh img{width:64px;height:64px;border-radius:12px;image-rendering:pixelated;box-shadow:0 0 0 2px rgba(143,211,255,.35),0 0 24px rgba(143,211,255,.25)}
+.dh h2{font-size:22px}.x{margin-left:auto;align-self:flex-start;width:40px;height:40px;border:0;background:none;color:var(--muted);font-size:22px;cursor:pointer;border-radius:8px}.x:hover{color:var(--text);background:var(--raised)}
+.kv{border:1px solid var(--line);border-radius:12px;margin-bottom:20px}
+.kv div{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;border-top:1px solid var(--line);font-size:14px}.kv div:first-child{border:0}.kv span{color:var(--muted)}.kv b{text-align:right;word-break:break-all}
+.lbl{font-size:13px;color:var(--muted);margin:0 0 8px;display:block}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.sec{margin-bottom:20px}
+.ban{padding:12px 14px;border-radius:10px;background:rgba(233,115,102,.08);border:1px solid rgba(233,115,102,.3);color:var(--red);font-size:14px;margin-bottom:20px}
+/* объявление */
+.toggle{display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:20px}
+.toggle input{display:none}.toggle i{width:44px;height:24px;border-radius:999px;background:var(--line2);position:relative;transition:.2s}
+.toggle i::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}
+.toggle input:checked+i{background:var(--green);box-shadow:0 0 14px rgba(59,130,214,.5)}.toggle input:checked+i::after{left:23px}
+.prev{padding:10px 16px;border-radius:10px;text-align:center;font-size:14px;background:linear-gradient(90deg,rgba(59,130,214,.18),rgba(15,168,224,.18));border:1px solid rgba(143,211,255,.25);margin-top:8px}
+.prev.warn{background:linear-gradient(90deg,rgba(233,179,90,.2),rgba(233,115,102,.16));border-color:rgba(233,179,90,.35)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+/* консоль */
+.term{height:420px;overflow-y:auto;padding:16px;font:13px/1.6 var(--mono);background:#030604;border-bottom:1px solid var(--line);white-space:pre-wrap}
+.term .c{color:var(--mint)}.term .e{color:var(--red)}.term .o{color:rgba(238,245,255,.85)}
+.cin{display:flex;gap:8px;padding:12px}.cin input{font-family:var(--mono)}
+.quick{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);padding:12px 18px;border-radius:10px;background:var(--raised);border:1px solid rgba(143,211,255,.35);box-shadow:0 0 30px rgba(143,211,255,.2);opacity:0;transition:.3s;z-index:60;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}.toast.bad{border-color:rgba(233,115,102,.5)}
+.burger{display:none}
+@media(max-width:1200px){.cards{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  aside{position:fixed;z-index:30;left:0;width:260px;transform:translateX(-100%);transition:.3s}aside.open{transform:none}
+  .burger{display:inline-flex}main{padding:20px}
+  .two,.row2{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}
+  .hide-m{display:none}
+}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs><symbol id="qlogo" viewBox="0 0 100 100"><path id="qp" d="M15 0H41A6 6 0 0 1 47 6V41A6 6 0 0 1 41 47H6A6 6 0 0 1 0 41V15A15 15 0 0 1 15 0Z"/><use href="#qp" transform="translate(100 0) scale(-1 1)"/><use href="#qp" transform="translate(0 100) scale(1 -1)"/><use href="#qp" transform="translate(100 100) scale(-1 -1)"/></symbol></defs></svg>
+
+<div class="login" id="login">
+  <form class="lcard" id="lform"><svg class="q"><use href="#qlogo"/></svg><h1>Админ-панель</h1><p>QUADRANT · войдите на сайте под аккаунтом администратора или введите ADMIN_TOKEN</p><p style="margin-top:-6px"><a href="/" style="color:var(--mint,#8FD3FF)">← На сайт</a></p>
+    <input class="in" id="tok" type="password" placeholder="Токен администратора" autocomplete="current-password"><button class="btn pri">Войти</button><div class="err" id="lerr"></div></form>
+</div>
+
+<div class="app" id="app" hidden>
+  <aside id="side">
+    <div class="brand"><svg class="q"><use href="#qlogo"/></svg><div>QUADRANT<small>Админ-панель</small></div></div>
+    <button class="nav on" data-p="overview"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Обзор</button>
+    <button class="nav" data-p="players"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c1-4 4-6 7-6s6 2 7 6M16 4a4 4 0 0 1 0 8M22 21c-.6-2.5-2-4.3-4-5.2"/></svg>Игроки<span class="cnt" id="pendCnt" hidden></span></button>
+    <button class="nav" data-p="orders"><svg class="ic" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Заказы<span class="cnt" id="ordCnt" hidden></span></button>
+    <button class="nav" data-p="products"><svg class="ic" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>Товары</button>
+    <button class="nav" data-p="announce"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1zM16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"/></svg>Объявление</button>
+    <button class="nav" data-p="console"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m6 9 3 3-3 3M12 15h5"/></svg>Консоль</button>
+    <button class="nav" data-p="log"><svg class="ic" viewBox="0 0 24 24"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>Журнал</button>
+    <div class="grow"></div>
+    <a class="nav" href="/" target="_blank"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3h7v7M10 14 21 3M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg>Открыть сайт</a>
+    <button class="nav" id="logout"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Выйти</button>
+  </aside>
+  <main>
+    <!-- ОБЗОР -->
+    <div data-page="overview">
+      <div class="top"><div><button class="btn sm burger" data-burger>☰</button> <h1 class="t" style="display:inline">Обзор</h1><div class="sub" id="ovSub"></div></div><button class="btn" id="refresh"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg>Обновить</button></div>
+      <div class="cards" id="kpis"></div>
+      <div class="two">
+        <div class="panel"><div class="ph">Регистрации за 14 дней<span class="muted" id="sum14"></span></div><div class="pb"><div class="chart" id="chart"></div></div></div>
+        <div class="panel"><div class="ph">Сервер</div><div class="pb"><div class="srv" id="srv"></div><div class="ints" id="ints"></div></div></div>
+      </div>
+      <div class="panel"><div class="ph">Последние события<button class="btn sm" data-go="log">Весь журнал</button></div><div class="pb"><ul class="feed" id="feed"></ul></div></div>
+    </div>
+    <!-- ИГРОКИ -->
+    <div data-page="players" hidden>
+      <div class="top"><div><button class="btn sm burger" data-burger>☰</button> <h1 class="t" style="display:inline">Игроки</h1><div class="sub">Нажмите на игрока, чтобы открыть карточку</div></div><button class="btn" id="csv"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Экспорт CSV</button></div>
+      <div class="toolbar"><div class="s"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="in" id="q" placeholder="Поиск: ник, email, Discord"></div>
+        <select class="in" id="sort" style="width:auto"><option value="new">Сначала новые</option><option value="old">Сначала старые</option><option value="nick">По нику</option><option value="login">По последнему входу</option></select></div>
+      <div class="chips" id="chips"></div>
+      <div class="bulk" id="bulk" hidden><span id="bulkN"></span><button class="btn sm pri" data-bulk="approve">Одобрить</button><button class="btn sm" data-bulk="reject">Отклонить</button><button class="btn sm dng" data-bulk="ban">Бан</button><button class="btn sm" data-bulk="clear">Снять</button></div>
+      <div class="panel tw"><table><thead><tr><th style="width:44px"><input type="checkbox" class="cb" id="all" aria-label="Выбрать всех"></th><th>Игрок</th><th>Статус</th><th class="hide-m">Discord</th><th class="hide-m">Роль</th><th class="hide-m">Регистрация</th></tr></thead><tbody id="rows"></tbody></table></div>
+    </div>
+    <!-- ЗАКАЗЫ -->
+    <div data-page="orders" hidden>
+      <div class="top"><div><button class="btn sm burger" data-burger>☰</button> <h1 class="t" style="display:inline">Заказы</h1><div class="sub" id="ordSub"></div></div><input class="in" id="oq" placeholder="Поиск: ник, номер, товар" style="max-width:260px"></div>
+      <div class="chips" id="ochips"></div>
+      <div class="panel tw"><table><thead><tr><th>Заказ</th><th>Игрок</th><th>Товар</th><th>Сумма</th><th class="hide-m">Оплата</th><th class="hide-m">Создан</th><th>Статус</th></tr></thead><tbody id="ordRows"></tbody></table></div>
+    </div>
+    <!-- ТОВАРЫ -->
+    <div data-page="products" hidden>
+      <div class="top"><div><button class="btn sm burger" data-burger>☰</button> <h1 class="t" style="display:inline">Товары</h1><div class="sub">Цены, скидки и видимость в магазине</div></div><div style="display:flex;gap:8px"><button class="btn" id="pAdd">+ Товар</button><button class="btn pri" id="pSave">Сохранить</button></div></div>
+      <div class="panel tw"><table><thead><tr><th>Товар</th><th class="hide-m">Категория</th><th>Цена, ₽</th><th class="hide-m">Старая цена</th><th class="hide-m">Бейдж</th><th>Скрыт</th><th></th></tr></thead><tbody id="prodRows"></tbody></table></div>
+    </div>
+    <!-- ОБЪЯВЛЕНИЕ -->
+    <div data-page="announce" hidden>
+      <div class="top"><div><button class="btn sm burger" data-burger>☰</button> <h1 class="t" style="display:inline">Объявление</h1><div class="sub">Баннер вверху сайта для всех посетителей</div></div></div>
+      <div class="panel" style="max-width:720px"><div class="pb">
+        <label class="toggle"><input type="checkbox" id="aOn"><i></i><span>Показывать на сайте</span></label>
+        <div class="row2 sec"><div><span class="lbl">Тип</span><select class="in" id="aType"><option value="info">Информация</option><option value="warn">Важное / тех. работы</option></select></div></div>
+        <div class="sec"><span class="lbl">Текст (до 300 символов)</span><textarea class="in" id="aText" maxlength="300" placeholder="Например: В субботу в 20:00 - ивент на спавне!"></textarea></div>
+        <span class="lbl">Предпросмотр</span><div class="prev" id="aPrev">Текст объявления</div>
+        <div style="margin-top:20px"><button class="btn pri" id="aSave">Сохранить</button></div>
+      </div></div>
+    </div>
+    <!-- КОНСОЛЬ -->
+    <div data-page="console" hidden>
+      <div class="top"><div><button class="btn sm burger" data-burger>☰</button> <h1 class="t" style="display:inline">Консоль</h1><div class="sub">Команды на сервер через RCON</div></div></div>
+      <div class="panel"><div class="term" id="term"></div>
+        <form class="cin" id="cform"><input class="in" id="cmd" placeholder="Команда без /, например: list" autocomplete="off"><button class="btn pri">Отправить</button></form>
+        <div class="quick"><button class="btn sm" data-cmd="list">list</button><button class="btn sm" data-cmd="whitelist list">whitelist list</button><button class="btn sm" data-cmd="whitelist reload">whitelist reload</button><button class="btn sm" data-cmd="save-all">save-all</button><button class="btn sm" data-cmd="time set day">time set day</button><button class="btn sm" data-cmd="weather clear">weather clear</button><button class="btn sm" data-cmd="say ">say …</button></div>
+      </div>
+    </div>
+    <!-- ЖУРНАЛ -->
+    <div data-page="log" hidden>
+      <div class="top"><div><button class="btn sm burger" data-burger>☰</button> <h1 class="t" style="display:inline">Журнал</h1><div class="sub">Последние 500 действий</div></div><input class="in" id="lq" placeholder="Фильтр" style="max-width:260px"></div>
+      <div class="panel tw"><table><thead><tr><th>Время</th><th>Кто</th><th>Действие</th><th>Игрок</th><th class="hide-m">Детали</th></tr></thead><tbody id="logRows"></tbody></table></div>
+    </div>
+  </main>
+</div>
+
+<div class="shade" id="shade"></div>
+<aside class="drawer" id="drawer" aria-label="Карточка игрока"></aside>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const head=(n,s=36)=>`https://mc-heads.net/avatar/${encodeURIComponent(n)}/${s}`;
+const fmt=d=>d?new Date(d).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}):"-";
+const ago=d=>{ const s=(Date.now()-new Date(d))/1000; return s<60?"только что":s<3600?`${s/60|0} мин назад`:s<86400?`${s/3600|0} ч назад`:`${s/86400|0} дн назад`; };
+const ST={approved:"В вайтлисте",pending:"Ожидает",need_discord:"Нет Discord",rejected:"Отклонён",banned:"Бан"};
+const ROLES={player:"Игрок",helper:"Хелпер",moderator:"Модератор",admin:"Админ"};
+const ACT={register:"Регистрация",discord_link:"Привязал Discord",approve:"Одобрил",reject:"Отклонил",unwhitelist:"Убрал из вайтлиста",ban:"Забанил",unban:"Разбанил",discord_ok:"Discord вручную",discord_reset:"Сброс Discord",kick:"Кик",reset_password:"Сброс пароля",delete:"Удалил",update:"Изменил профиль",announcement:"Объявление",rcon:"RCON",order:"Новый заказ",order_status:"Статус заказа",products:"Изменил товары",password:"Сменил пароль",email:"Сменил email",discord_unlink:"Отвязал Discord",self_delete:"Удалил аккаунт",logout_all:"Вышел везде"};
+const STAR=`<img src="/assets/star.png" alt="★" title="Администратор" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:-2px;margin-left:6px">`;
+const OST={awaiting_payment:"Ждёт оплаты",paid:"Оплачен",done:"Выдан",cancelled:"Отменён"};
+let orders=[], prods=[], oflt="all";
+let tok=sessionStorage.getItem("q_adm")||"", users=[], log=[], sel=new Set(), flt="all", cur=null, ov=null;
+
+function toast(t,bad){ const el=$("#toast"); el.textContent=t; el.className="toast show"+(bad?" bad":""); clearTimeout(toast.t); toast.t=setTimeout(()=>el.className="toast",2800); }
+async function call(p,b){ const r=await fetch("/api/admin/"+p,{method:b?"POST":"GET",headers:{"Content-Type":"application/json",...(tok?{"x-admin-token":tok}:{})},credentials:"same-origin",body:b&&JSON.stringify(b)}); const j=await r.json().catch(()=>({}));
+  if(r.status===401){ logout(); throw new Error(j.error); } if(!r.ok&&r.status!==207) throw new Error(j.error||"Ошибка"); return j; }
+
+/* ---- навигация ---- */
+function go(p){ $$("[data-page]").forEach(x=>x.hidden=x.dataset.page!==p); $$(".nav[data-p]").forEach(n=>n.classList.toggle("on",n.dataset.p===p)); $("#side").classList.remove("open");
+  if(p==="overview") loadOverview(); if(p==="players") loadUsers(); if(p==="log") loadLog(); if(p==="announce") loadAnn(); if(p==="console") $("#cmd").focus(); if(p==="orders") loadOrders(); if(p==="products") loadProds(); }
+$$(".nav[data-p]").forEach(n=>n.onclick=()=>go(n.dataset.p));
+document.addEventListener("click",e=>{ const g=e.target.closest("[data-go]"); if(g) go(g.dataset.go); if(e.target.closest("[data-burger]")) $("#side").classList.toggle("open"); });
+
+/* ---- вход ---- */
+$("#lform").onsubmit=async e=>{ e.preventDefault(); tok=$("#tok").value.trim(); try{ await call("overview"); sessionStorage.setItem("q_adm",tok); start(); }catch(err){ $("#lerr").textContent=err.message||"Неверный токен"; } };
+function logout(){ sessionStorage.removeItem("q_adm"); tok=""; $("#app").hidden=true; $("#login").hidden=false; }
+$("#logout").onclick=logout;
+function start(){ $("#login").hidden=true; $("#app").hidden=false; go("overview"); }
+
+/* ---- обзор ---- */
+async function loadOverview(){
+  ov=await call("overview"); const c=ov.counts;
+  $("#ovSub").textContent=`Обновлено ${new Date().toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"})}`;
+  const K=[["all","Всего игроков",ov.total],["pending","Ждут одобрения",c.pending||0,1],["approved","В вайтлисте",c.approved||0],["need_discord","Без Discord",c.need_discord||0],["rejected","Отклонены",c.rejected||0],["banned","Забанены",c.banned||0],["@orders","Новые заказы",ov.newOrders||0,1],["@orders","Выручка, ₽",(ov.revenue||0).toLocaleString("ru-RU")]];
+  $("#kpis").innerHTML=K.map(([f,l,n,h])=>`<button class="kpi${h&&n?" hl":""}" data-f="${f}"><b>${n}</b><span>${l}</span></button>`).join("");
+  $$(".kpi").forEach(k=>k.onclick=()=>{ if(k.dataset.f==="@orders") return go("orders"); flt=k.dataset.f; go("players"); });
+  setOrd(ov.newOrders||0);
+  const max=Math.max(1,...ov.days.map(d=>d.n)); $("#sum14").textContent=`всего ${ov.days.reduce((a,d)=>a+d.n,0)}`;
+  $("#chart").innerHTML=ov.days.map(d=>`<div class="bar" title="${d.d}: ${d.n}"><em>${d.n||""}</em><i class="${d.n?"":"z"}" style="height:0"></i><span>${d.d.slice(8)}</span></div>`).join("");
+  requestAnimationFrame(()=>$$(".bar i").forEach((b,i)=>b.style.height=Math.max(3,ov.days[i].n/max*140)+"px"));
+  const s=ov.server; $("#srv").innerHTML=`<span class="dot ${s.online?"on":""}"></span><div><b>${s.online?`Онлайн · ${s.players}/${s.max}`:"Офлайн"}</b><div class="sub">${s.online?esc(s.version||""):"Сервер не отвечает на пинг"}</div></div>`;
+  const I=[["Discord-верификация",ov.discord],["RCON",ov.rcon],["Авто-вайтлист после Discord",ov.autoWhitelist]];
+  $("#ints").innerHTML=I.map(([l,v])=>`<div class="int"><span>${l}</span><b class="${v?"y":"n"}">${v?"Включено":"Выключено"}</b></div>`).join("");
+  $("#feed").innerHTML=ov.recent.length?ov.recent.map(feedItem).join(""):`<li class="muted">Событий пока нет</li>`;
+  setPend(c.pending||0);
+}
+const feedItem=l=>`<li>${l.target&&l.target!=="-"?`<img class="av" style="width:28px;height:28px" src="${head(l.target,28)}" alt="">`:""}<span><b>${esc(ACT[l.action]||l.action)}</b> ${l.target!=="-"?esc(l.target):""} <span class="muted">${esc(l.details)}</span></span><time>${ago(l.t)}</time></li>`;
+function setPend(n){ $("#pendCnt").hidden=!n; $("#pendCnt").textContent=n; }
+$("#refresh").onclick=()=>loadOverview().then(()=>toast("Обновлено"));
+
+/* ---- игроки ---- */
+async function loadUsers(){ users=(await call("users")).users; setPend(users.filter(u=>u.status==="pending").length); draw(); if(cur){ const u=users.find(x=>x.nick===cur); u?openDrawer(u.nick):closeDrawer(); } }
+function view(){
+  const q=$("#q").value.toLowerCase().trim(), s=$("#sort").value;
+  let v=users.filter(u=>(flt==="all"||u.status===flt)&&(!q||u.nick.toLowerCase().includes(q)||u.email.includes(q)||(u.discord?.username||"").toLowerCase().includes(q)));
+  const by={new:(a,b)=>b.created.localeCompare(a.created),old:(a,b)=>a.created.localeCompare(b.created),nick:(a,b)=>a.nick.localeCompare(b.nick),login:(a,b)=>(b.lastLogin||"").localeCompare(a.lastLogin||"")};
+  return v.sort(by[s]);
+}
+function draw(){
+  const cnt=s=>users.filter(u=>s==="all"||u.status===s).length;
+  $("#chips").innerHTML=["all","pending","need_discord","approved","rejected","banned"].map(f=>`<button class="${flt===f?"on":""}" data-f="${f}">${f==="all"?"Все":ST[f]} <b>${cnt(f)}</b></button>`).join("");
+  $$("#chips button").forEach(b=>b.onclick=()=>{ flt=b.dataset.f; sel.clear(); draw(); });
+  const v=view();
+  $("#rows").innerHTML=v.length?v.map(u=>`<tr data-n="${esc(u.nick)}" class="${sel.has(u.nick)?"sel":""}"><td><input type="checkbox" class="cb" ${sel.has(u.nick)?"checked":""} aria-label="Выбрать ${esc(u.nick)}"></td>
+    <td><div class="who"><img class="av" src="${head(u.nick)}" alt="" loading="lazy"><div><b>${esc(u.nick)}${u.role==="admin"?STAR:""}</b><small>${esc(u.email)}</small></div></div></td>
+    <td><span class="st ${u.status}">${ST[u.status]}</span></td>
+    <td class="hide-m">${u.discord?`<span style="color:${u.discord.inGuild?"var(--text)":"var(--amber)"}">${u.discord.username?"@"+esc(u.discord.username):"✓ вручную"}</span>${u.discord.inGuild?"":` <span class="muted">· не на сервере</span>`}`:`<span class="muted">-</span>`}</td>
+    <td class="hide-m">${ROLES[u.role]||"Игрок"}</td><td class="hide-m muted">${fmt(u.created)}</td></tr>`).join(""):`<tr><td colspan="6" class="empty">Никого не найдено</td></tr>`;
+  $("#all").checked=v.length&&v.every(u=>sel.has(u.nick));
+  $("#bulk").hidden=!sel.size; $("#bulkN").textContent=`Выбрано: ${sel.size}`;
+}
+$("#rows").onclick=e=>{ const tr=e.target.closest("tr[data-n]"); if(!tr) return; const n=tr.dataset.n;
+  if(e.target.classList.contains("cb")){ e.target.checked?sel.add(n):sel.delete(n); draw(); return; } openDrawer(n); };
+$("#all").onchange=e=>{ view().forEach(u=>e.target.checked?sel.add(u.nick):sel.delete(u.nick)); draw(); };
+$("#q").oninput=draw; $("#sort").onchange=draw;
+$$("[data-bulk]").forEach(b=>b.onclick=async()=>{ const a=b.dataset.bulk; if(a==="clear"){ sel.clear(); return draw(); }
+  let reason=""; if(a==="ban"){ reason=prompt(`Причина бана для ${sel.size} игроков:`,"Нарушение правил"); if(reason===null) return; }
+  const r=await call("action",{action:a,nicks:[...sel],reason}); toast(r.errors?.length?`Готово с ошибками: ${r.errors[0]}`:`Готово: ${sel.size}`,!!r.errors?.length); sel.clear(); loadUsers(); });
+$("#csv").onclick=()=>{ const rows=[["nick","email","status","discord","role","created","last_login","note"],...view().map(u=>[u.nick,u.email,ST[u.status],u.discord?.username||"",u.role,u.created,u.lastLogin||"",u.note||""])];
+  const csv="\ufeff"+rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(";")).join("\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download=`quadrant-players-${new Date().toISOString().slice(0,10)}.csv`; a.click(); };
+
+/* ---- карточка игрока ---- */
+function openDrawer(n){ const u=users.find(x=>x.nick===n); if(!u) return; cur=n;
+  const A=(a,l,cls="",dis=false)=>`<button class="btn ${cls}" data-a="${a}" ${dis?"disabled":""}>${l}</button>`;
+  $("#drawer").innerHTML=`<div class="dh"><img src="${head(u.nick,64)}" alt=""><div><h2>${esc(u.nick)}${u.role==="admin"?STAR:""}</h2><span class="st ${u.status}">${ST[u.status]}</span></div><button class="x" id="dx" aria-label="Закрыть">×</button></div>
+   ${u.banned?`<div class="ban"><b>Заблокирован.</b> ${esc(u.banReason||"Без причины")}</div>`:""}
+   <div class="kv"><div><span>Email</span><b>${esc(u.email)}</b></div>
+    <div><span>Discord</span><b>${u.discord?`${u.discord.username?"@"+esc(u.discord.username):"-"} ${u.discord.inGuild?"✓ на сервере":"· не на сервере"}${u.discord.manual?" (вручную)":""}`:"не привязан"}</b></div>
+    ${u.discord?.id?`<div><span>Discord ID</span><b>${esc(u.discord.id)}</b></div>`:""}
+    <div><span>Регистрация</span><b>${fmt(u.created)}</b></div><div><span>Последний вход</span><b>${fmt(u.lastLogin)}</b></div><div><span>IP</span><b>${esc(u.lastIp||"-")}</b></div></div>
+   <span class="lbl">Вайтлист</span><div class="acts">${A("approve","✓ Одобрить","pri",u.whitelisted||u.banned)}${A("reject","Отклонить","",u.rejected)}${A("unwhitelist","Убрать из вайтлиста","",!u.whitelisted)}${A("kick","Кикнуть (RCON)")}</div>
+   <span class="lbl">Discord</span><div class="acts">${A("discord_ok","Отметить вручную","",u.discord?.inGuild)}${A("discord_reset","Сбросить привязку","",!u.discord)}</div>
+   <div class="sec"><span class="lbl">Баланс</span><input class="in" id="dBal" type="number" min="0" step="1" value="${+u.balance||0}"></div>
+   <div class="sec"><span class="lbl">Роль</span><select class="in" id="dRole">${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${u.role===k?"selected":""}>${v}</option>`).join("")}</select></div>
+   <div class="sec"><span class="lbl">Заметка администрации</span><textarea class="in" id="dNote" placeholder="Видна только админам">${esc(u.note)}</textarea><div style="margin-top:8px"><button class="btn sm" id="dSave">Сохранить роль и заметку</button></div></div>
+   <span class="lbl">Опасная зона</span><div class="acts">${u.banned?A("unban","Разбанить"):A("ban","Забанить","dng")}${A("reset_password","Сбросить пароль")}${A("delete","Удалить аккаунт","dng")}</div>`;
+  $("#drawer").classList.add("open"); $("#shade").classList.add("open");
+  $("#dx").onclick=closeDrawer;
+  $("#dSave").onclick=async()=>{ await call("update",{nick:u.nick,role:$("#dRole").value,note:$("#dNote").value,balance:Math.max(0,Math.round(+$("#dBal").value||0))}); toast("Сохранено"); loadUsers(); };
+  $$("#drawer [data-a]").forEach(b=>b.onclick=async()=>{ const a=b.dataset.a; let reason="";
+    if(a==="ban"){ reason=prompt(`Причина бана ${u.nick}:`,"Нарушение правил"); if(reason===null) return; }
+    if(a==="kick"){ reason=prompt("Причина кика:",""); if(reason===null) return; }
+    if(a==="delete"&&!confirm(`Удалить аккаунт ${u.nick} без возможности восстановления?`)) return;
+    if(a==="reset_password"&&!confirm(`Сгенерировать новый пароль для ${u.nick}?`)) return;
+    try{ const r=await call("action",{action:a,nick:u.nick,reason});
+      if(r.password){ prompt(`Новый пароль для ${u.nick} - передайте игроку:`,r.password); }
+      if(r.errors?.length) toast(r.errors[0],true); else toast("Готово");
+      if(a==="delete") closeDrawer(); loadUsers(); }catch(e){ toast(e.message,true); } });
+}
+function closeDrawer(){ cur=null; $("#drawer").classList.remove("open"); $("#shade").classList.remove("open"); }
+$("#shade").onclick=closeDrawer; addEventListener("keydown",e=>{ if(e.key==="Escape") closeDrawer(); });
+
+/* ---- объявление ---- */
+async function loadAnn(){ const a=await call("announcement"); $("#aOn").checked=a.enabled; $("#aType").value=a.type; $("#aText").value=a.text; prev(); }
+function prev(){ $("#aPrev").textContent=$("#aText").value||"Текст объявления"; $("#aPrev").className="prev"+($("#aType").value==="warn"?" warn":""); }
+$("#aText").oninput=prev; $("#aType").onchange=prev;
+$("#aSave").onclick=async()=>{ await call("announcement",{enabled:$("#aOn").checked,type:$("#aType").value,text:$("#aText").value}); toast($("#aOn").checked?"Объявление опубликовано":"Сохранено (скрыто)"); };
+
+/* ---- консоль ---- */
+const hist=[]; let hi=0;
+function out(cls,t){ const d=document.createElement("div"); d.className=cls; d.textContent=t; $("#term").append(d); $("#term").scrollTop=1e9; }
+out("o","QUADRANT RCON - введите команду. ↑/↓ - история.");
+$("#cform").onsubmit=async e=>{ e.preventDefault(); const c=$("#cmd").value.trim(); if(!c) return; hist.push(c); hi=hist.length; $("#cmd").value=""; out("c","> "+c);
+  try{ out("o",(await call("rcon",{command:c})).output); }catch(err){ out("e",err.message); } };
+$("#cmd").onkeydown=e=>{ if(e.key==="ArrowUp"&&hi>0){ e.preventDefault(); $("#cmd").value=hist[--hi]; } if(e.key==="ArrowDown"){ e.preventDefault(); hi=Math.min(hist.length,hi+1); $("#cmd").value=hist[hi]||""; } };
+$$("[data-cmd]").forEach(b=>b.onclick=()=>{ $("#cmd").value=b.dataset.cmd; $("#cmd").focus(); if(!b.dataset.cmd.endsWith(" ")) $("#cform").requestSubmit(); });
+
+/* ---- заказы ---- */
+function setOrd(n){ $("#ordCnt").hidden=!n; $("#ordCnt").textContent=n; }
+async function loadOrders(){ orders=(await call("orders")).orders; drawOrders(); }
+function drawOrders(){ const q=$("#oq").value.toLowerCase(), cnt={all:orders.length}; orders.forEach(o=>cnt[o.status]=(cnt[o.status]||0)+1);
+  setOrd((cnt.awaiting_payment||0)+(cnt.paid||0));
+  const sum=orders.filter(o=>o.status==="paid"||o.status==="done").reduce((a,o)=>a+o.price,0);
+  $("#ordSub").textContent=`${orders.length} ${orders.length%10===1&&orders.length%100!==11?"заказ":[2,3,4].includes(orders.length%10)&&![12,13,14].includes(orders.length%100)?"заказа":"заказов"} · выручка ${sum.toLocaleString("ru-RU")} ₽`;
+  $("#ochips").innerHTML=[["all","Все"],...Object.entries(OST)].map(([k,l])=>`<button class="${oflt===k?"on":""}" data-of="${k}">${l} <b>${cnt[k]||0}</b></button>`).join("");
+  const v=orders.filter(o=>(oflt==="all"||o.status===oflt)&&(!q||[o.id,o.nick,o.title].join(" ").toLowerCase().includes(q)));
+  $("#ordRows").innerHTML=v.length?v.map(o=>`<tr><td style="font-family:var(--mono);font-size:13px">${esc(o.id)}</td><td><img class="av" style="width:24px;height:24px;vertical-align:middle;margin-right:8px" src="${head(o.nick,24)}" alt="">${esc(o.nick)}</td><td>${esc(o.title)}</td><td><b>${o.price} ₽</b></td><td class="hide-m muted">${o.method==="sbp"?"СБП":"Карта"}</td><td class="hide-m muted">${fmt(o.created)}</td>
+    <td><select class="pin" data-oid="${esc(o.id)}" style="width:auto">${Object.entries(OST).map(([k,l])=>`<option value="${k}"${o.status===k?" selected":""}>${l}</option>`).join("")}</select></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Заказов нет</td></tr>`;
+}
+$("#oq").oninput=drawOrders;
+$("#ochips").onclick=e=>{ const b=e.target.closest("[data-of]"); if(b){ oflt=b.dataset.of; drawOrders(); } };
+$("#ordRows").onchange=async e=>{ const s=e.target.closest("[data-oid]"); if(!s) return;
+  if(s.value==="done"&&!confirm("Отметить заказ выданным? Для подписки срок продлится автоматически.")) return drawOrders();
+  try{ const r=await call("order",{id:s.dataset.oid,status:s.value}); Object.assign(orders.find(o=>o.id===r.order.id),r.order); toast(`Заказ ${r.order.id}: ${OST[r.order.status]}`); drawOrders(); }catch(err){ toast(err.message,1); drawOrders(); } };
+
+/* ---- товары ---- */
+async function loadProds(){ prods=(await call("products")).products; drawProds(); }
+function drawProds(){ $("#prodRows").innerHTML=prods.length?prods.map((p,i)=>`<tr data-i="${i}"><td><span class="sw" style="background:${esc(p.color)}"></span><input class="pin" data-k="title" value="${esc(p.title)}" style="width:calc(100% - 26px)"></td>
+  <td class="hide-m"><input class="pin" data-k="cat" value="${esc(p.cat)}"></td><td><input class="pin n" type="number" min="0" data-k="price" value="${p.price}"></td>
+  <td class="hide-m"><input class="pin n" type="number" min="0" data-k="old" value="${p.old||""}" placeholder="-"></td><td class="hide-m"><input class="pin" data-k="badge" value="${esc(p.badge||"")}" placeholder="-" style="width:110px"></td>
+  <td><input type="checkbox" class="cb" data-k="hidden"${p.hidden?" checked":""}></td><td><button class="btn sm dng" data-del="${i}" title="Удалить"><svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Товаров нет</td></tr>`; }
+$("#prodRows").oninput=e=>{ const k=e.target.dataset.k, tr=e.target.closest("[data-i]"); if(!k||!tr) return; const p=prods[tr.dataset.i];
+  p[k]=e.target.type==="checkbox"?e.target.checked:e.target.type==="number"?(e.target.value===""?undefined:+e.target.value):e.target.value; };
+$("#prodRows").onclick=e=>{ const d=e.target.closest("[data-del]"); if(d&&confirm("Удалить товар?")){ prods.splice(+d.dataset.del,1); drawProds(); } };
+$("#pAdd").onclick=()=>{ prods.push({id:"item"+Date.now().toString(36),cat:"Прочее",title:"Новый товар",desc:"",price:100,skin:"Steve",color:"#3B82D6",hidden:true}); drawProds(); toast("Товар добавлен скрытым - не забудьте сохранить"); };
+$("#pSave").onclick=async()=>{ try{ prods=(await call("products",{products:prods})).products; drawProds(); toast("Товары сохранены"); }catch(err){ toast(err.message,1); } };
+
+/* ---- журнал ---- */
+async function loadLog(){ log=(await call("log")).log; drawLog(); }
+function drawLog(){ const q=$("#lq").value.toLowerCase(); const v=log.filter(l=>!q||JSON.stringify(l).toLowerCase().includes(q)||(ACT[l.action]||"").toLowerCase().includes(q));
+  $("#logRows").innerHTML=v.length?v.map(l=>`<tr><td class="muted">${fmt(l.t)}</td><td>${esc(l.who)}</td><td>${esc(ACT[l.action]||l.action)}</td><td>${esc(l.target)}</td><td class="hide-m muted">${esc(l.details)}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Пусто</td></tr>`; }
+$("#lq").oninput=drawLog;
+
+call("me").then(start).catch(()=>{ if(tok) call("overview").then(start).catch(()=>{}); });
+</script></body></html>

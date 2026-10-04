@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Магазин - QUADRANT</title>
+<meta name="description" content="Подписка QUADRANT+ и сервисные услуги.">
+<meta name="theme-color" content="#060A12">
+<link rel="icon" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="shop">
+<main class="wrap page">
+  <div class="page-head"><div><div class="eyebrow">Магазин</div><h1>Магазин QUADRANT</h1><p class="lead">Покупки помогают оплачивать хостинг и развивать сервер.</p></div></div>
+  <div class="notice"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Ваниль остаётся ванилью: в магазине нет ресурсов, китов и игровых преимуществ - только поддержка и сервисные услуги.</div>
+  <div class="shopbar"><div class="cats" id="cats"></div><label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="sq" placeholder="Поиск товаров…" aria-label="Поиск товаров"></label></div>
+  <div class="products" id="products"></div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+let products=[], cat="Все";
+const ALL='<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
+const tileBg=c=>`background:linear-gradient(160deg,${c},color-mix(in srgb,${c} 60%,#000))`;
+function drawShop(){
+  const cats=["Все",...new Set(products.map(p=>p.cat))];
+  document.getElementById("cats").innerHTML=cats.map(c=>`<button class="${c===cat?"on":""}" data-c="${esc(c)}">${c==="Все"?ALL:""}${esc(c)} <i>${c==="Все"?products.length:products.filter(p=>p.cat===c).length}</i></button>`).join("");
+  document.querySelectorAll("#cats button").forEach(b=>b.onclick=()=>{ cat=b.dataset.c; drawShop(); });
+  const q=document.getElementById("sq").value.toLowerCase().trim();
+  const v=products.filter(p=>(cat==="Все"||p.cat===cat)&&(!q||(p.title+p.desc+p.cat).toLowerCase().includes(q)));
+  document.getElementById("products").innerHTML=v.length?v.map(p=>`<article class="prod reveal">
+    ${p.old?`<span class="badge sale">${pct(p)}</span>`:p.badge?`<span class="badge hot">${esc(p.badge)}</span>`:""}
+    <div class="pic"><div class="sq" style="${tileBg(p.color)}"><img src="${bodyImg(p.skin,160)}" alt="" loading="lazy"></div></div>
+    <div class="body"><div class="cat">${esc(p.cat)}</div><h3>${esc(p.title)}</h3><p>${esc(p.desc)}</p>
+      <div class="foot"><div class="price"><b>${p.price} ₽</b>${p.old?`<s>${p.old} ₽</s>`:""}</div><button class="btn btn-glow" data-buy="${p.id}">Купить →</button></div></div></article>`).join("")
+    :`<div class="empty-box">Ничего не нашлось. Попробуйте другой запрос.</div>`;
+  Q.reveal(document.getElementById("products")); Q.spot(document.getElementById("products"));
+}
+document.getElementById("sq").oninput=drawShop;
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-buy]"); if(b) checkout(products.find(p=>p.id===b.dataset.buy)); });
+function checkout(p){
+  if(!Q.me){ Q.toast("Войдите или зарегистрируйтесь, чтобы купить"); return Q.openAuth("login"); }
+  Q.openModal(`<div class="mhead"><svg><use href="#qlogo"/></svg><h3 id="mTitle">Оформление</h3></div>
+    <div class="sum"><div class="sq" style="${tileBg(p.color)}"><img src="${bodyImg(p.skin,80)}" alt=""></div><div><b>${esc(p.title)}</b><span>${esc(p.cat)} · для ${esc(Q.me.nick)}</span></div><div class="pr">${p.price} ₽</div></div>
+    <span class="lbl" style="display:block;font-size:14px;color:var(--muted);margin-bottom:8px">Способ оплаты</span>
+    <div class="pay"><label><input type="radio" name="pm" value="card" checked> Банковская карта</label><label><input type="radio" name="pm" value="sbp"> СБП</label></div>
+    <label class="check"><input type="checkbox" id="agree"> <span>Я согласен(на) с тем, что покупка не даёт игровых преимуществ и не подлежит возврату после выдачи</span></label>
+    <button class="btn btn-glow full" id="pay">Перейти к оплате · ${p.price} ₽</button><div class="msg" id="pmsg"></div>`);
+  document.getElementById("pay").onclick=async()=>{
+    if(!document.getElementById("agree").checked){ const m=document.getElementById("pmsg"); m.className="msg err"; m.textContent="Подтвердите согласие"; return; }
+    try{ const r=await Q.api.call("/order",{product:p.id,method:document.querySelector("[name=pm]:checked").value});
+      if(r.payUrl) return location.href=r.payUrl;
+      Q.openModal(`<div style="text-align:center"><div class="mhead" style="justify-content:center"><svg><use href="#qlogo"/></svg></div><h3 style="font-size:22px;margin-bottom:8px">Заказ ${esc(r.order.id)} создан</h3><p style="color:var(--muted);margin-bottom:24px">${r.demo?"Это демо-режим - реальная оплата не проводится.":"Онлайн-оплата скоро будет подключена. Администратор свяжется с вами в Discord."}</p><a class="btn full" href="profile.html#orders">Мои покупки</a></div>`);
+    }catch(err){ const m=document.getElementById("pmsg"); m.className="msg err"; m.textContent=err.message; }
+  };
+}
+Q.init.then(async()=>{ try{ products=(await Q.api.call("/shop")).products; }catch(e){ products=[]; Q.toast(e.message); } drawShop(); });
+</script>
+</body></html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Карта - QUADRANT</title>
+<meta name="description" content="Динамическая карта мира QUADRANT.">
+<meta name="theme-color" content="#060A12">
+<link rel="icon" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="map">
+<main class="wrap page">
+  <div class="page-head"><div><div class="eyebrow">Карта</div><h1>Динамическая карта сервера</h1><p class="lead">Находите красивые места, смотрите на постройки других игроков и ищите друзей онлайн. Карта обновляется в реальном времени и <a href="#live" class="hl">доступна всем игрокам</a>.</p></div></div>
+
+  <div class="sec-head" id="live" style="margin-top:0"><div><div class="eyebrow">Онлайн</div><h2>Карта прямо здесь</h2></div></div>
+  <div class="frame-bar"><span class="pill"><span class="dot" data-sdot></span><span data-stext>Проверяем сервер…</span></span><a class="btn btn-sm" id="mapFull" target="_blank" rel="noopener">На весь экран ↗</a></div>
+  <div class="frame reveal" id="frame"></div>
+
+  <div class="sec-head"><div><div class="eyebrow">Возможности</div><h2>Что умеет карта</h2></div></div>
+  <div class="tiles">
+    <div class="tile reveal"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></div><h3>Игроки онлайн</h3><p>Головы игроков двигаются по карте в реальном времени. Скрыться можно, присев или надев голову.</p></div>
+    <div class="tile reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg></div><h3>3D-режим</h3><p>Облетайте постройки в 3D прямо в браузере - как в режиме наблюдателя.</p></div>
+    <div class="tile reveal"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/></svg></div><h3>Координаты</h3><p>Наведите курсор - увидите координаты блока. Удобно, чтобы договориться о встрече.</p></div>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+function renderMap(){
+  const url=CONFIG.mapUrl, f=document.getElementById("frame");
+  const full=document.getElementById("mapFull"); full.hidden=!url; if(url) full.href=url;
+  f.innerHTML = url ? `<iframe src="${esc(url)}" title="Динамическая карта" loading="lazy" allowfullscreen></iframe>`
+    : `<canvas data-worldmap style="position:absolute;inset:0;width:100%;height:100%;opacity:.35"></canvas><div class="ph"><div><svg viewBox="0 0 24 24" style="width:44px;height:44px;stroke:var(--mint);fill:none;stroke-width:1.6"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg><b>Карта скоро появится</b>Администратор ещё не подключил ${esc(CONFIG.mapEngine)}.</div></div>`;
+  if(!url) mapCanvas(f.querySelector("canvas"), 21);
+}
+Q.init.then(renderMap);
+</script>
+</body></html>
